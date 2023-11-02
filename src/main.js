@@ -11,10 +11,11 @@ if (require('electron-squirrel-startup')) {
 
 let currentDirectory = null;
 let file = null;
+let mainWindow;
 
 const createWindow = () => {
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: {
@@ -29,7 +30,12 @@ const createWindow = () => {
 
   // Open the DevTools.
   mainWindow.webContents.openDevTools({mode: 'detach'});
+
 };
+ipcMain.on('commandResult', (event, data) => {
+  // Send the captured output back to the renderer process
+  event.sender.send('displayCommandResult', data);
+});
 
 ipcMain.on('openFile', async (event, data) => {
   dialog.showOpenDialog({
@@ -70,7 +76,8 @@ ipcMain.on('storePackageJSON', (event, data) => {
   });
 });
 
-function refreshFile(event) {
+function refreshFile(event)
+{
   // Check if filePath is defined
   console.log("refreshing");
   if (!file) {
@@ -96,7 +103,7 @@ function refreshFile(event) {
 
 
 
-  ipcMain.on('fetchPackage', async(event, data) => {
+  ipcMain.on('fetchPackage', async(event, data, key) => {
     console.log(data.packageName);
     https.get('https://registry.npmjs.org/'+ data.packageName, (res) => {
     let data = '';
@@ -107,6 +114,7 @@ function refreshFile(event) {
 
     res.on('end', () => {
       const jsonData = JSON.parse(data);
+      jsonData.versions["key"] = key;
       // console.log(jsonData.versions);
       event.sender.send('fetchedPackageVersion', jsonData.versions)
     });
@@ -122,22 +130,27 @@ function refreshFile(event) {
       'package2': 'special command for package2'
     };
     console.table(data)
-    managePackage(currentDirectory, data.package, data.version, specialInstallCommands, event);
+    managePackage(currentDirectory, data.package, data.version, specialInstallCommands, event, data.dependency);
   });
 
-  function managePackage(folderPath, packageName, version, specialInstallCommands, event) {
+  function managePackage(folderPath, packageName, version, specialInstallCommands, event, dependency) {
     if (version.startsWith('^')) {
       version = version.replace('^', '');
     }
+    let saveFlag = dependency === "dependencies" ? ' --save ' : ' --save-dev ';
     let cdCommand = 'cd ' + folderPath;
     let uninstallCommand = 'npm uninstall ' + packageName;
     let installCommand = (typeof(specialInstallCommands[packageName]) === "undefined") ? 
-      "npm install " + packageName + "@" + version : 
+      "npm install " + saveFlag + packageName + "@" + version : 
       specialInstallCommands[packageName] + " " + packageName + "@" + version;
 
     let fullCommand = cdCommand + ' && ' + uninstallCommand + ' && ' + installCommand;
-    runCommand(fullCommand, () => {
+    runCommand(fullCommand, (result) => {
       refreshFile(event)
+      // setTimeout(
+        event.sender.send('displayCommandResult', result);
+      
+      
     });
     // Now you can run fullCommand in the terminal
 }
@@ -147,18 +160,26 @@ ipcMain.on('install', (event, packageName, isDev ) => {
   let saveFlag = isDev ? ' --save ' : ' --save-dev ';
   let fullCommand = `cd ${currentDirectory} && npm install ${saveFlag} ${packageName}`;
   console.log(fullCommand)
-  runCommand(fullCommand, () => {
-    refreshFile(event);
+  runCommand(fullCommand, (result) => {
+    refreshFile(event)
+    event.sender.send('displayCommandResult', result);
   });
 });
 
 ipcMain.on('uninstall', (event, packageName) => {
   let fullCommand = `cd ${currentDirectory} && npm uninstall ${packageName}`;
   console.log(fullCommand)
-  runCommand(fullCommand, () => {
-    refreshFile(event);
+  runCommand(fullCommand, (result) => {
+    refreshFile(event)
+    event.sender.send('displayCommandResult', result);
   });
 });
+
+ipcMain.on('error', (event) => {
+  console.log("error");
+});
+
+
 
 
 
