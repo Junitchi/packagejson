@@ -23,6 +23,7 @@
 
       const dependencyButtonHandler = (event, button, key) => {
         event.preventDefault();
+        createLoadingScreen();
         console.log(button.textContent);
         console.log("DEP"+key)
         let parsedButtonContentObject = parseButtonContent(button.textContent);

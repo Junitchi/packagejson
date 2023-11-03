@@ -167,3 +167,10 @@ label{
 .fileSelectorHidden{
   display: none;
 }
+
+#loading-text{
+  display: flex;
+  justify-self: center;
+  align-self: center;
+  color: darkmagenta;
+}

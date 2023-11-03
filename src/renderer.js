@@ -70,6 +70,7 @@ ipcRenderer.on('displayCommandResult', (event, data) => {
 
   ipcRenderer.on('fetchedPackageVersion', (event, data) => {
     console.log(data);
+    removeLoadingScreen();
 
     // Check if overlayingDiv already exists
     let existingOverlay = document.getElementById('overlayingDiv');
@@ -93,8 +94,11 @@ ipcRenderer.on('displayCommandResult', (event, data) => {
     overlayingDiv.appendChild(exitButton);
 
     // Iterate over each key in data
+    let depedency = data["key"];
+    delete data["key"]; 
     for (let key in data) {
-      console.log(`Key: ${key}`);
+      
+      console.log(`Key: ${data[key]}`);
 
       // Create a button for each key
       let button = document.createElement('button');
@@ -103,7 +107,7 @@ ipcRenderer.on('displayCommandResult', (event, data) => {
       // Add an onclick method to the button
       button.onclick = function() {
         console.log(this.textContent);
-        ipcRenderer.send('managePackage', { package: packageName, version: key, dependency: data["key"] });
+        ipcRenderer.send('managePackage', { package: packageName, version: key, dependency: depedency });
         overlayingDiv.remove();
         setTimeout(createLoadingScreen(),1000);
         
@@ -291,7 +295,7 @@ fileSelector.textContent = 'Load Package.json';
 fileSelector.id = 'fileSelector';
 fileSelector.onclick = (event) => {
   event.preventDefault();
-  ipcRenderer.send('loadPackageJSON');
+  ipcRenderer.send('openFile');
 };
 
 submitButton.onclick = (event) => {
