@@ -124,6 +124,7 @@ ipcRenderer.on('displayCommandResult', (event, data) => {
 });
 
 ipcRenderer.on('packageJsonData', (event, data) => {
+    currentPackageJSON = data;
     let form = document.getElementById('form-id');
     console.log(data)
     form.innerHTML = "";
@@ -231,20 +232,27 @@ ipcRenderer.on('packageJsonData', (event, data) => {
          
           form.onsubmit = (event) => {
             event.preventDefault();
-            setTimeout(createLoadingScreen(),1000);
             // Retrieve string from input field
             let packageName = inputField.value;
+            let dependencies = currentPackageJSON["dependencies"];
+            let devDependencies = currentPackageJSON["devDependencies"];
             
             if(packageName.length >= 1){
-              // Send package name in 'storePackageJSON' message
-            ipcRenderer.send('install', packageName, key === 'dependencies');
-            overlayBox.remove();
-            }
-            
-            
-          };
+             // Check if package does not exist in dependencies or devDependencies
+              if(!dependencies[packageName] && !devDependencies[packageName]){
+                // Send package name in 'storePackageJSON' message
+                setTimeout(createLoadingScreen(), 1000);
+                ipcRenderer.send('install', packageName, key === 'dependencies');
+              } else {
+                console.log(packageName + ' is already installed.');
+                let dependency = dependencies[packageName] ? true : false;
+                createAlreadyInstalledScreen(packageName, dependency);
+              }
 
-          
+            }
+            overlayBox.remove();
+        };
+        
           
           
           // console.log(collectData());

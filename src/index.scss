@@ -174,3 +174,33 @@ label{
   align-self: center;
   color: darkmagenta;
 }
+
+#overlayingAlreadyInstalledScreen{
+  background-color: $tertiary-color;
+    display: flex;
+    flex-direction: column-reverse;
+    overflow-y: auto; /* Enable vertical scroll */
+    position: fixed;
+    z-index: 1;
+    width: 100%;
+    height: 100%; /* Take up the full height of the viewport */
+    justify-content: center; /* Center items vertically */
+    // align-items: center; /* Center items horizontally */
+    margin: 0px;
+    top: 0;
+    left: 0;
+    
+    button{
+        width: 75%;
+        align-self: center;
+        border-width: 2px 3px 4px 3px;
+        border-style: outset;
+    }
+}
+
+#installed-text{
+  display: flex;
+  justify-self: center;
+  align-self: center;
+  color: darkmagenta;
+}

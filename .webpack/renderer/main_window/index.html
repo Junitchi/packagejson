@@ -20,6 +20,7 @@
       const { ipcRenderer } = require('electron');
       let packageName = "";
       let packageVersion = "";
+      let currentPackageJSON = null;
 
       const dependencyButtonHandler = (event, button, key) => {
         event.preventDefault();
@@ -46,6 +47,8 @@
       }
       
       function install(packageName, isDev) {
+        
+        // createLoadingScreen();
         ipcRenderer.send('install',  packageName, isDev );
       }
 
@@ -115,6 +118,28 @@
         // Append the new overlaying div to the body
         document.body.appendChild(overlayingDiv);
     }
+
+    function createAlreadyInstalledScreen(packageName, dependency) {
+
+        let dependencyType = { true: "dependency", false: "devDependency"};
+        // Create a new overlaying div
+        let overlayingDiv = document.createElement('div');
+        overlayingDiv.id = 'overlayingAlreadyInstalledScreen';
+
+        // Create a paragraph to display already installed text
+        let installedParagraph = document.createElement('p');
+        installedParagraph.id = 'installed-text';
+        installedParagraph.textContent = packageName + " is already installed as " + dependencyType[dependency]; // Already installed text
+        overlayingDiv.appendChild(installedParagraph);
+
+        // Append the new overlaying div to the body
+        document.body.appendChild(overlayingDiv);
+        setTimeout(()=>{
+          document.getElementById('overlayingAlreadyInstalledScreen').remove();
+
+        }, 4000);
+    }
+
 
     function removeLoadingScreen() {
         // Get the overlayingDiv
